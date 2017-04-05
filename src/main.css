@@ -1,12 +1,14 @@
 body {
-  font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
-  font-size: 30px;
-  margin: 0;
-  text-align: center;
-  color: #293c4b;
+  background-color: #333333;
 }
 
-img {
-  margin: 20px 0;
-  max-width: 200px;
+.word {
+  font-size: 24px;
+  font-family: Monaco;
+  color: #CCCCCC;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -50%)
 }

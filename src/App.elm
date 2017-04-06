@@ -122,7 +122,7 @@ orp word =
        len -> [ text (left orpI word)
               , span [ style [ ( "color", "red" ) ] ]
                      [ text (slice orpI (orpI + 1) word)]
-              , text (right (len - (orpI + 1)) word) 
+              , text (right (len - (orpI + 1)) word)
               ]
 
 
@@ -130,14 +130,14 @@ view : Model -> Html Msg
 view model =
   div []
       [ div []
-          [ button [ onClick DecWpm ] [ text "Dec" ]
-          , button [ onClick IncWpm ] [ text "Inc" ]
+          [ button [ onClick DecWpm, class "pure-button" ] [ text "Dec" ]
+          , button [ onClick IncWpm, class "pure-button" ] [ text "Inc" ]
           , input [ defaultValue "Some text here", onInput GetText ] []
           ]
       , div [ class "word" ] (orp model.word)
       ]
-    
-    
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch

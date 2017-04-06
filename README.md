@@ -1,5 +1,7 @@
 ## Hermes
 
+Pair programmed at RC by Carl J. Factora & Alberto Zaccagni
+
 ### TODOS
 
 [x] single word at the center of the page, with colors and font
@@ -22,5 +24,11 @@
   [] dont print paging
   
   
+  
+take in the HTML and divide between labels
+ignore poging
+show normal text
+treat code differently
+
 
 [] contextual punctuation

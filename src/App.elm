@@ -1,11 +1,11 @@
 port module App exposing (..)
 
-import Html exposing (Html, text, div, img, button, input)
-import Html.Attributes exposing (src, class, defaultValue)
+import Html exposing (Html, text, div, img, button, input, span)
+import Html.Attributes exposing (src, class, defaultValue, style)
 import Html.Events exposing (onClick, onInput)
 import Array exposing (..)
 import Time exposing (Time, millisecond, second)
-import String exposing (join, split, words)
+import String exposing (join, split, words, left, right)
 import Keyboard exposing (..)
 
 
@@ -99,6 +99,31 @@ update msg model = case msg of
                          }, Cmd.none )
 
 
+-- function ORP(word){
+--   var length = word.length;
+--   while('\n,.?!:;"'.indexOf(word[--length]) !== -1);
+--   switch(++length) {
+--   case 0: case 1: return 0;
+--   case 2: case 3: return 1;
+--   default: return Math.floor(length / 2) - 1;
+--   }
+-- }
+getOrpIndex : String -> Int
+getOrpIndex word = case String.length word of
+            1 -> 0
+            2 -> 1
+            3 -> 1
+            _ -> (floor (String.length word / 2)) - 1
+
+orp : String -> List (Html msg)
+orp word = case String.length word of
+    _ -> [ text (left (getOrpIndex word - 1) word)
+         , span [ style [ ( "color", "red" ) ] ]
+                [ text (toString (String.charAt (getOrdpIndex word))) ]
+         , text (right word ((getOrpIndex word) + 1) (String.length word))
+         ]
+
+
 view : Model -> Html Msg
 view model =
   div [ onClick NextWord ]
@@ -107,7 +132,7 @@ view model =
     , button [ onClick IncWpm ] [ text "Inc" ]
     , input [ defaultValue "Some text here", onInput GetText ] []
     ]
-  , div [ class "word" ] [ text model.word ]
+  , div [ class "word" ] (orp model.word)
   ]
 
 

@@ -2,8 +2,41 @@ body {
   background-color: #333333;
 }
 
+input {
+  font-size: 12px;
+  font-family: Monaco;
+}
+
+button {
+    padding-right: 5px;
+    font-family: Monaco;
+    font-size: 100%;
+    color: #444;
+    color: rgba(0,0,0,.8);
+    border: 1px solid #999;
+    border: transparent;
+    background-color: #E6E6E6;
+    text-decoration: none;
+    border-radius: 2px;
+}
+
+button {
+    padding-right: 5px;    
+    display: inline-block;
+    zoom: 1;
+    white-space: nowrap;
+    vertical-align: middle;
+    text-align: center;
+    cursor: pointer;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 .word {
-  font-size: 24px;
+  font-size: 35px;
   font-family: Monaco;
   color: #CCCCCC;
   position: absolute;

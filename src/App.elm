@@ -3,9 +3,9 @@ port module App exposing (..)
 import Html exposing (Html, text, div, img, button, input, span)
 import Html.Attributes exposing (src, class, defaultValue, style)
 import Html.Events exposing (onClick, onInput)
-import Array exposing (..)
+import Array exposing (Array, fromList, get, length)
 import Time exposing (Time, millisecond, second)
-import String exposing (join, split, words, left, right)
+import String exposing (join, split, words, left, right, slice, fromChar)
 import Keyboard exposing (..)
 
 
@@ -23,7 +23,7 @@ type alias Model =
 
 init : String -> ( Model, Cmd Msg )
 init flags =
-    ( { word = "Let's start"
+    ( { word = ""
       , nth = 0
       , words = fromList [ "Hello", "here", "are", "some", "strings." ]
       , sec = 0
@@ -36,10 +36,8 @@ init flags =
 
 
 type Msg
-    = NextWord
-    | IncWpm
+    = IncWpm
     | DecWpm
-    | StartOver
     | Tick Time
     | GetText String
     | Pressed Int
@@ -50,12 +48,10 @@ type Msg
 port weightQuestion : String -> Cmd msg
 port weightAnswer : (Float -> msg) -> Sub msg
 
-
 getMaybe : Int -> Array String -> String
 getMaybe nth words = case get nth words of
   Nothing -> ""
   Just string -> string
-
 
 {-
 wpm doesnt have to be float until we actually do the division
@@ -73,73 +69,80 @@ iter bool step = case bool of
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model = case msg of
-  NextWord -> ( model, Cmd.none )
-  IncWpm -> ( { model
-              | wpm = model.wpm + 50
-              , defaultWpm = model.defaultWpm + 50
-              }, Cmd.none)
-  DecWpm -> ( { model
-              | wpm = model.wpm - 50
-              , defaultWpm = model.defaultWpm - 50
-              }, Cmd.none)
-  StartOver -> ( model, Cmd.none )
-  Tick time -> ( { model
-                 | wpm = model.defaultWpm
-                 , nth = (iter model.playing model.nth) % length model.words
-                 , word = getMaybe model.nth model.words
-                 , sec = time
-                 }, Cmd.none )
-  GetText text -> ( { model | words = fromList (words text) }, Cmd.none )
+
+  IncWpm ->
+    ( { model
+        | wpm = model.wpm + 50
+        , defaultWpm = model.defaultWpm + 50
+      }, Cmd.none )
+
+  DecWpm ->
+    ( { model
+        | wpm = model.wpm - 50
+        , defaultWpm = model.defaultWpm - 50
+      }, Cmd.none )
+
+  Tick time ->
+    ( { model
+        | wpm = model.defaultWpm
+        , nth = (iter model.playing model.nth) % length model.words
+        , word = getMaybe model.nth model.words
+        , sec = time
+      }
+    , Cmd.none )
+
+  GetText text ->
+    ( { model | words = fromList (words text) } , Cmd.none )
+
   Pressed key ->
-    if key == 32 then ( { model | playing = not model.playing }, Cmd.none )
+    if key == 32
+    then ( { model | playing = not model.playing } , Cmd.none )
     else ( model, Cmd.none )
+
   SendWord -> ( model, (weightQuestion model.word) )
-  GetWeight weight -> ( { model
-                         | wpm = model.wpm * weight
-                         }, Cmd.none )
 
+  GetWeight weight ->
+    ( { model
+        | wpm = model.wpm * weight
+      }, Cmd.none )
 
--- function ORP(word){
---   var length = word.length;
---   while('\n,.?!:;"'.indexOf(word[--length]) !== -1);
---   switch(++length) {
---   case 0: case 1: return 0;
---   case 2: case 3: return 1;
---   default: return Math.floor(length / 2) - 1;
---   }
--- }
 getOrpIndex : String -> Int
-getOrpIndex word = case String.length word of
-            1 -> 0
-            2 -> 1
-            3 -> 1
-            _ -> (floor (String.length word / 2)) - 1
+getOrpIndex word =
+  let len = String.length word
+  in case len of
+       1 -> 0
+       2 -> 1
+       3 -> 1
+       _ -> (floor (toFloat len / 2)) - 1
 
 orp : String -> List (Html msg)
-orp word = case String.length word of
-    _ -> [ text (left (getOrpIndex word - 1) word)
-         , span [ style [ ( "color", "red" ) ] ]
-                [ text (toString (String.charAt (getOrdpIndex word))) ]
-         , text (right word ((getOrpIndex word) + 1) (String.length word))
-         ]
+orp word =
+  let orpI = getOrpIndex word
+  in case String.length word of
+       len -> [ text (left orpI word)
+              , span [ style [ ( "color", "red" ) ] ]
+                     [ text (slice orpI (orpI + 1) word)]
+              , text (right (len - (orpI + 1)) word) 
+              ]
 
 
 view : Model -> Html Msg
 view model =
-  div [ onClick NextWord ]
-  [div []
-    [ button [ onClick DecWpm ] [ text "Dec" ]
-    , button [ onClick IncWpm ] [ text "Inc" ]
-    , input [ defaultValue "Some text here", onInput GetText ] []
-    ]
-  , div [ class "word" ] (orp model.word)
-  ]
-
-
+  div []
+      [ div []
+          [ button [ onClick DecWpm ] [ text "Dec" ]
+          , button [ onClick IncWpm ] [ text "Inc" ]
+          , input [ defaultValue "Some text here", onInput GetText ] []
+          ]
+      , div [ class "word" ] (orp model.word)
+      ]
+    
+    
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ Time.every (toMilliseconds model.wpm) Tick
-      , Time.every (toMilliseconds model.wpm) (always SendWord)
-      , Keyboard.presses (\int -> Pressed int)
-      , weightAnswer GetWeight 
-      ]
+  Sub.batch
+       [ Time.every (toMilliseconds model.wpm) Tick
+       , Time.every (toMilliseconds model.wpm) (always SendWord)
+       , Keyboard.presses (\int -> Pressed int)
+       , weightAnswer GetWeight 
+       ]

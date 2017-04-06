@@ -31,7 +31,5 @@ function weight(word) {
   if (vowels >= 5 && vowels <= 6)  result = 1 / 4
   if (vowels >= 7)                 result = 1 / 8
 
-  if (lastCharacter === '.') console.log('period seen!', result * multiplier)
-
   return result * multiplier
 }

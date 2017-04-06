@@ -1,0 +1,26 @@
+{
+  "name": "hermes",
+  "version": "1.0.0",
+  "description": "### TODOS",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lazywithclass/hermes.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lazywithclass/hermes/issues"
+  },
+  "homepage": "https://github.com/lazywithclass/hermes#readme",
+  "dependencies": {
+    "syllable": "^2.0.0"
+  }
+}

@@ -15,6 +15,7 @@ type alias Model =
     , words : Array String
     , sec : Time
     , wpm : Float
+    , defaultWpm : Float
     , playing : Bool
     , pressed : Int
     }
@@ -26,7 +27,8 @@ init flags =
       , nth = 0
       , words = fromList [ "Hello", "here", "are", "some", "strings." ]
       , sec = 0
-      , wpm = toFloat 350
+      , wpm = toFloat 300
+      , defaultWpm = toFloat 300
       , playing = False
       , pressed = 0
       }
@@ -42,11 +44,11 @@ type Msg
     | GetText String
     | Pressed Int
     | SendWord
-    | GetSyllables Int
+    | GetWeight Float
 
 
-port syllableQuestion : String -> Cmd msg
-port syllableAnswer : (Int -> msg) -> Sub msg
+port weightQuestion : String -> Cmd msg
+port weightAnswer : (Float -> msg) -> Sub msg
 
 
 getMaybe : Int -> Array String -> String
@@ -55,6 +57,10 @@ getMaybe nth words = case get nth words of
   Just string -> string
 
 
+{-
+wpm doesnt have to be float until we actually do the division
+because the Time has to be a Float
+-}
 toMilliseconds : Float -> Time
 toMilliseconds wpm = 60000 / wpm
 
@@ -65,18 +71,21 @@ iter bool step = case bool of
   False -> step
 
 
-wordSpeed: Float -> String -> Float
-wordSpeed wpm word = (wpm * 3)
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model = case msg of
   NextWord -> ( model, Cmd.none )
-  IncWpm -> ( { model | wpm = model.wpm + 50 }, Cmd.none)
-  DecWpm -> ( { model | wpm = model.wpm - 50 }, Cmd.none)
+  IncWpm -> ( { model
+              | wpm = model.wpm + 50
+              , defaultWpm = model.defaultWpm + 50
+              }, Cmd.none)
+  DecWpm -> ( { model
+              | wpm = model.wpm - 50
+              , defaultWpm = model.defaultWpm - 50
+              }, Cmd.none)
   StartOver -> ( model, Cmd.none )
   Tick time -> ( { model
-                 | nth = (iter model.playing model.nth) % 5
+                 | wpm = model.defaultWpm
+                 , nth = (iter model.playing model.nth) % length model.words
                  , word = getMaybe model.nth model.words
                  , sec = time
                  }, Cmd.none )
@@ -84,8 +93,10 @@ update msg model = case msg of
   Pressed key ->
     if key == 32 then ( { model | playing = not model.playing }, Cmd.none )
     else ( model, Cmd.none )
-  SendWord -> ( model, (syllableQuestion model.word) )
-  GetSyllables syllables -> ( { model | word = toString syllables}, Cmd.none )
+  SendWord -> ( model, (weightQuestion model.word) )
+  GetWeight weight -> ( { model
+                         | wpm = model.wpm * weight
+                         }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -105,5 +116,5 @@ subscriptions model =
     Sub.batch [ Time.every (toMilliseconds model.wpm) Tick
       , Time.every (toMilliseconds model.wpm) (always SendWord)
       , Keyboard.presses (\int -> Pressed int)
-      , syllableAnswer GetSyllables
+      , weightAnswer GetWeight 
       ]

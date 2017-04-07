@@ -4,59 +4,55 @@ import Html exposing (Html, text, div, img, button, input, span)
 import Html.Attributes exposing (src, class, defaultValue, style)
 import Html.Events exposing (onClick, onInput)
 import Array exposing (Array, fromList, get, length)
-import Time exposing (Time, millisecond, second)
-import String exposing (join, split, words, left, right, slice, fromChar)
-import Keyboard exposing (..)
+import Time exposing (Time, every, millisecond, second)
+import String exposing (split, words, left, right, slice)
+import Keyboard exposing (KeyCode, presses)
 
 
+-- when there's no effects
+pure : Model -> ( Model, Cmd Msg )
+pure model = ( model, Cmd.none )
+
+welcomeMsg : List String
+welcomeMsg = words "Hello! Welcome to Hermes, an awesome speed reader app!"
+
+
+--| Init State + Model
 type alias Model =
-    { word : String
-    , nth : Int
-    , words : Array String
-    , sec : Time
-    , wpm : Float
-    , defaultWpm : Float
-    , playing : Bool
-    , pressed : Int
-    }
-
+  { word : String
+  , nth : Int
+  , words : Array String
+  , sec : Time
+  -- wpm handlers
+  , wpm : Float
+  , defaultWpm : Float
+  -- pause/play
+  , playing : Bool
+  -- keyboard
+  , pressed : Int
+  }
 
 init : String -> ( Model, Cmd Msg )
 init flags =
-    ( { word = ""
-      , nth = 0
-      , words = fromList [ "Hello", "here", "are", "some", "strings." ]
-      , sec = 0
-      , wpm = toFloat 300
-      , defaultWpm = toFloat 300
-      , playing = False
-      , pressed = 0
-      }
-    , Cmd.none )
+  { word = ""
+  , nth = 0
+  , words = fromList welcomeMsg
+  , sec = 0
+  , wpm = toFloat 300
+  , defaultWpm = toFloat 300
+  , playing = False
+  , pressed = 0
+  } |> pure
 
 
-type Msg
-    = IncWpm
-    | DecWpm
-    | Tick Time
-    | GetText String
-    | Pressed Int
-    | SendWord
-    | GetWeight Float
-
-
-port weightQuestion : String -> Cmd msg
-port weightAnswer : (Float -> msg) -> Sub msg
-
+--| Helpers
 getMaybe : Int -> Array String -> String
-getMaybe nth words = case get nth words of
-  Nothing -> ""
-  Just string -> string
+getMaybe nth words =
+  case get nth words of
+    Nothing     -> ""
+    Just string -> string
 
-{-
-wpm doesnt have to be float until we actually do the division
-because the Time has to be a Float
--}
+                   
 toMilliseconds : Float -> Time
 toMilliseconds wpm = 60000 / wpm
 
@@ -67,82 +63,110 @@ iter bool step = case bool of
   False -> step
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model = case msg of
-
-  IncWpm ->
-    ( { model
-        | wpm = model.wpm + 50
-        , defaultWpm = model.defaultWpm + 50
-      }, Cmd.none )
-
-  DecWpm ->
-    ( { model
-        | wpm = model.wpm - 50
-        , defaultWpm = model.defaultWpm - 50
-      }, Cmd.none )
-
-  Tick time ->
-    ( { model
-        | wpm = model.defaultWpm
-        , nth = (iter model.playing model.nth) % length model.words
-        , word = getMaybe model.nth model.words
-        , sec = time
-      }
-    , Cmd.none )
-
-  GetText text ->
-    ( { model | words = fromList (words text) } , Cmd.none )
-
-  Pressed key ->
-    if key == 32
-    then ( { model | playing = not model.playing } , Cmd.none )
-    else ( model, Cmd.none )
-
-  SendWord -> ( model, (weightQuestion model.word) )
-
-  GetWeight weight ->
-    ( { model
-        | wpm = model.wpm * weight
-      }, Cmd.none )
+--| ORP
+isPunc str =
+  if str == "!" || str == ":" || str == "," || str == "."
+  then 1
+  else 0
 
 getOrpIndex : String -> Int
 getOrpIndex word =
-  let len = String.length word
-  in case len of
-       1 -> 0
-       2 -> 1
-       3 -> 1
-       _ -> (floor (toFloat len / 2)) - 1
+  let 
+    realLen = String.length word
+    last = slice (realLen - 1) realLen word
+    len = realLen - (isPunc last)
+  in
+    case len of
+      1 -> 0
+      2 -> 1
+      3 -> 1
+      _ -> (floor <| toFloat len / 2) - 1
 
 orp : String -> List (Html msg)
 orp word =
   let orpI = getOrpIndex word
-  in case String.length word of
-       len -> [ text (left orpI word)
-              , span [ style [ ( "color", "red" ) ] ]
-                     [ text (slice orpI (orpI + 1) word)]
-              , text (right (len - (orpI + 1)) word)
-              ]
+      len = String.length word
+  in [ left orpI word |> text
+     , span [ style [ ( "color", "red" ) ] ]
+         [ slice orpI (orpI + 1) word |> text ]
+     , right (len - (orpI + 1)) word |> text
+     ]
+
+    
+--| Effects
+type Msg
+  = IncWpm
+  | DecWpm
+  | Tick Time
+  | GetText String
+  | Pressed Int
+  -- JS calls
+  | SendWord
+  | GetWeight Float
 
 
+--| Update
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+  case msg of
+
+    IncWpm -> 
+    { model | wpm = model.wpm + 50
+    , defaultWpm = model.defaultWpm + 50
+    } |> pure
+
+    DecWpm -> 
+    { model | wpm = model.wpm - 50
+    , defaultWpm = model.defaultWpm - 50
+    } |> pure
+
+    Tick time ->
+    { model | wpm = model.defaultWpm
+    , nth = iter model.playing model.nth % length model.words
+    , word = getMaybe model.nth model.words
+    , sec = time
+    } |> pure
+
+    GetText text -> 
+    { model | words = words text |> fromList } |> pure
+
+    Pressed key -> pure <|
+      if key == 32
+      then { model | playing = not model.playing }
+      else model
+
+    -- port calls.. only real effectful thing
+    SendWord -> ( model, weightQuestion model.word )
+
+    GetWeight weight -> 
+    { model | wpm = model.wpm * weight } |> pure
+    
+
+
+--| View
 view : Model -> Html Msg
 view model =
   div []
       [ div []
           [ button [ onClick DecWpm, class "pure-button" ] [ text "Dec" ]
           , button [ onClick IncWpm, class "pure-button" ] [ text "Inc" ]
-          , input [ defaultValue "Some text here", onInput GetText ] []
+          , input [ defaultValue "Paste text here!", onInput GetText ] []
           ]
       , div [ class "word" ] (orp model.word)
       ]
 
 
+--| Sub
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-       [ Time.every (toMilliseconds model.wpm) Tick
-       , Time.every (toMilliseconds model.wpm) (always SendWord)
-       , Keyboard.presses (\int -> Pressed int)
+       [ every (toMilliseconds model.wpm) Tick
+       , every (toMilliseconds model.wpm) (always SendWord)
+       , presses Pressed
        , weightAnswer GetWeight 
        ]
+
+
+--| ports
+port weightQuestion : String -> Cmd msg
+port weightAnswer : (Float -> msg) -> Sub msg

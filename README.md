@@ -24,11 +24,3 @@ Pair programmed at RC by Carl J. Factora & Alberto Zaccagni
   * [] dont print paging
 * [] handle ( ) " " etc as punctuation
 * [] contextual punctuation
-
-take in the HTML and divide between labels
-ignore poging
-show normal text
-treat code differently
-
-
-

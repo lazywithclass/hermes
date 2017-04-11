@@ -13,15 +13,20 @@ import Keyboard exposing (KeyCode, presses)
 pure : Model -> ( Model, Cmd Msg )
 pure model = ( model, Cmd.none )
 
-welcomeMsg : List String
-welcomeMsg = words "Hello! Welcome to Hermes, an awesome speed reader app!"
+
+tuplise : String -> Array ( String, Bool)
+tuplise = words >> List.map (\w -> (w, True)) >> fromList
+
+
+welcomeMsg : Array (String, Bool)
+welcomeMsg = tuplise "Hello! Welcome to Hermes, an awesome speed reader app!"
 
 
 --| Init State + Model
 type alias Model =
   { word : String
   , nth : Int
-  , words : Array String
+  , words : Array (String, Bool)
   , sec : Time
   -- wpm handlers
   , wpm : Float
@@ -36,7 +41,7 @@ init : String -> ( Model, Cmd Msg )
 init flags =
   { word = ""
   , nth = 0
-  , words = fromList welcomeMsg
+  , words = welcomeMsg
   , sec = 0
   , wpm = toFloat 300
   , defaultWpm = toFloat 300
@@ -46,13 +51,13 @@ init flags =
 
 
 --| Helpers
-getMaybe : Int -> Array String -> String
+getMaybe : Int -> Array (String, Bool) -> String
 getMaybe nth words =
   case get nth words of
     Nothing     -> ""
-    Just string -> string
+    Just (string, bool) -> string
 
-                   
+
 toMilliseconds : Float -> Time
 toMilliseconds wpm = 60000 / wpm
 
@@ -64,6 +69,7 @@ iter bool step = case bool of
 
 
 --| ORP
+isPunc : String -> Int
 isPunc str =
   if str == "!" || str == ":" || str == "," || str == "."
   then 1
@@ -92,7 +98,7 @@ orp word =
      , right (len - (orpI + 1)) word |> text
      ]
 
-    
+
 --| Effects
 type Msg
   = IncWpm
@@ -110,12 +116,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
 
-    IncWpm -> 
+    IncWpm ->
     { model | wpm = model.wpm + 50
     , defaultWpm = model.defaultWpm + 50
     } |> pure
 
-    DecWpm -> 
+    DecWpm ->
     { model | wpm = model.wpm - 50
     , defaultWpm = model.defaultWpm - 50
     } |> pure
@@ -127,8 +133,8 @@ update msg model =
     , sec = time
     } |> pure
 
-    GetText text -> 
-    { model | words = words text |> fromList } |> pure
+    GetText text ->
+    { model | words = tuplise text } |> pure
 
     Pressed key -> pure <|
       if key == 32
@@ -138,9 +144,9 @@ update msg model =
     -- port calls.. only real effectful thing
     SendWord -> ( model, weightQuestion model.word )
 
-    GetWeight weight -> 
+    GetWeight weight ->
     { model | wpm = model.wpm * weight } |> pure
-    
+
 
 
 --| View

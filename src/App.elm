@@ -7,6 +7,7 @@ import Array exposing (Array, fromList, get, length)
 import Time exposing (Time, every, millisecond, second)
 import String exposing (split, words, left, right, slice)
 import Keyboard exposing (KeyCode, presses)
+import Task exposing (perform,succeed)
 
 import Tokeniser exposing (..)
 
@@ -90,12 +91,13 @@ orp : String -> List (Html msg)
 orp word =
   let orpI = getOrpIndex word
       len = String.length word
-  in [ left orpI word |> text
-     , span [ style [ ( "color", "red" ) ] ]
-         [ slice orpI (orpI + 1) word |> text ]
-     , right (len - (orpI + 1)) word |> text
-     ]
-
+  in
+    [ left orpI word |> text
+    , span [ style [ ( "color", "red" ) ] ]
+        [ slice orpI (orpI + 1) word |> text ]
+    , right (len - (orpI + 1)) word |> text
+    ]
+    
 
 --| Effects
 type Msg
@@ -108,6 +110,8 @@ type Msg
   | SendWord
   | GetWeight Float
 
+send : msg -> Cmd msg
+send msg = succeed msg |> perform identity
 
 --| Update
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -124,14 +128,25 @@ update msg model =
     , defaultWpm = model.defaultWpm - 50
     } |> pure
 
+    -- WE CANNOT UPDATE model.playing HERE
     Tick time ->
-    let (word, isPlaying) = getMaybe model.nth model.words in
-    { model | wpm = model.defaultWpm
-    , nth = iter model.playing model.nth % length model.words
-    , word = word
-    , playing = model.playing && isPlaying
-    , sec = time
-    } |> pure
+      let
+        (word, isPlaying) = getMaybe model.nth model.words
+      in
+        -- if isPlaying
+        -- then
+        { model | wpm = model.defaultWpm
+        , nth = iter model.playing model.nth % length model.words
+        , word = word
+        , sec = time
+        } |> pure
+        -- else
+        --   ( { model | wpm = model.defaultWpm
+        --     , word = word
+        --     -- , playing = not model.playing
+        --     -- , sec = time
+        --     }
+        --   , send (Pressed 32))
 
     GetText text ->
     { model | words = parseString text |> fromList } |> pure
@@ -152,12 +167,16 @@ update msg model =
 --| View
 view : Model -> Html Msg
 view model =
+  -- let
+  --   (word,_) = getMaybe model.nth model.words
+  -- in
   div []
       [ div []
           [ button [ onClick DecWpm, class "pure-button" ] [ text "Dec" ]
           , button [ onClick IncWpm, class "pure-button" ] [ text "Inc" ]
           , input [ defaultValue "Paste text here!", onInput GetText ] []
           ]
+      -- , div [ class "word" ] (orp word)
       , div [ class "word" ] (orp model.word)
       ]
 

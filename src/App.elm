@@ -8,18 +8,16 @@ import Time exposing (Time, every, millisecond, second)
 import String exposing (split, words, left, right, slice)
 import Keyboard exposing (KeyCode, presses)
 
+import Tokeniser exposing (..)
+
 
 -- when there's no effects
 pure : Model -> ( Model, Cmd Msg )
 pure model = ( model, Cmd.none )
 
 
-tuplise : String -> Array ( String, Bool)
-tuplise = words >> List.map (\w -> (w, True)) >> fromList
-
-
 welcomeMsg : Array (String, Bool)
-welcomeMsg = tuplise "Hello! Welcome to Hermes, an awesome speed reader app!"
+welcomeMsg = parseHtmlString myElement
 
 
 --| Init State + Model
@@ -51,11 +49,11 @@ init flags =
 
 
 --| Helpers
-getMaybe : Int -> Array (String, Bool) -> String
+getMaybe : Int -> Array (String, Bool) -> (String, Bool)
 getMaybe nth words =
   case get nth words of
-    Nothing     -> ""
-    Just (string, bool) -> string
+    Nothing -> ("", False)
+    Just tuple -> tuple
 
 
 toMilliseconds : Float -> Time
@@ -77,7 +75,7 @@ isPunc str =
 
 getOrpIndex : String -> Int
 getOrpIndex word =
-  let 
+  let
     realLen = String.length word
     last = slice (realLen - 1) realLen word
     len = realLen - (isPunc last)
@@ -127,14 +125,16 @@ update msg model =
     } |> pure
 
     Tick time ->
+    let (word, isPlaying) = getMaybe model.nth model.words in
     { model | wpm = model.defaultWpm
     , nth = iter model.playing model.nth % length model.words
-    , word = getMaybe model.nth model.words
+    , word = word
+    , playing = model.playing && isPlaying
     , sec = time
     } |> pure
 
     GetText text ->
-    { model | words = tuplise text } |> pure
+    { model | words = parseString text |> fromList } |> pure
 
     Pressed key -> pure <|
       if key == 32
@@ -169,7 +169,7 @@ subscriptions model =
        [ every (toMilliseconds model.wpm) Tick
        , every (toMilliseconds model.wpm) (always SendWord)
        , presses Pressed
-       , weightAnswer GetWeight 
+       , weightAnswer GetWeight
        ]
 
 

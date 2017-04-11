@@ -8,20 +8,23 @@ import Time exposing (Time, every, millisecond, second)
 import String exposing (split, words, left, right, slice)
 import Keyboard exposing (KeyCode, presses)
 
+import Tokeniser exposing (..)
+
 
 -- when there's no effects
 pure : Model -> ( Model, Cmd Msg )
 pure model = ( model, Cmd.none )
 
-welcomeMsg : List String
-welcomeMsg = words "Hello! Welcome to Hermes, an awesome speed reader app!"
+
+welcomeMsg : Array (String, Bool)
+welcomeMsg = parseHtmlString myElement
 
 
 --| Init State + Model
 type alias Model =
   { word : String
   , nth : Int
-  , words : Array String
+  , words : Array (String, Bool)
   , sec : Time
   -- wpm handlers
   , wpm : Float
@@ -36,7 +39,7 @@ init : String -> ( Model, Cmd Msg )
 init flags =
   { word = ""
   , nth = 0
-  , words = fromList welcomeMsg
+  , words = welcomeMsg
   , sec = 0
   , wpm = toFloat 300
   , defaultWpm = toFloat 300
@@ -46,13 +49,13 @@ init flags =
 
 
 --| Helpers
-getMaybe : Int -> Array String -> String
+getMaybe : Int -> Array (String, Bool) -> (String, Bool)
 getMaybe nth words =
   case get nth words of
-    Nothing     -> ""
-    Just string -> string
+    Nothing -> ("", False)
+    Just tuple -> tuple
 
-                   
+
 toMilliseconds : Float -> Time
 toMilliseconds wpm = 60000 / wpm
 
@@ -64,6 +67,7 @@ iter bool step = case bool of
 
 
 --| ORP
+isPunc : String -> Int
 isPunc str =
   if str == "!" || str == ":" || str == "," || str == "."
   then 1
@@ -71,7 +75,7 @@ isPunc str =
 
 getOrpIndex : String -> Int
 getOrpIndex word =
-  let 
+  let
     realLen = String.length word
     last = slice (realLen - 1) realLen word
     len = realLen - (isPunc last)
@@ -92,7 +96,7 @@ orp word =
      , right (len - (orpI + 1)) word |> text
      ]
 
-    
+
 --| Effects
 type Msg
   = IncWpm
@@ -110,25 +114,27 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
 
-    IncWpm -> 
+    IncWpm ->
     { model | wpm = model.wpm + 50
     , defaultWpm = model.defaultWpm + 50
     } |> pure
 
-    DecWpm -> 
+    DecWpm ->
     { model | wpm = model.wpm - 50
     , defaultWpm = model.defaultWpm - 50
     } |> pure
 
     Tick time ->
+    let (word, isPlaying) = getMaybe model.nth model.words in
     { model | wpm = model.defaultWpm
     , nth = iter model.playing model.nth % length model.words
-    , word = getMaybe model.nth model.words
+    , word = word
+    , playing = model.playing && isPlaying
     , sec = time
     } |> pure
 
-    GetText text -> 
-    { model | words = words text |> fromList } |> pure
+    GetText text ->
+    { model | words = parseString text |> fromList } |> pure
 
     Pressed key -> pure <|
       if key == 32
@@ -138,9 +144,9 @@ update msg model =
     -- port calls.. only real effectful thing
     SendWord -> ( model, weightQuestion model.word )
 
-    GetWeight weight -> 
+    GetWeight weight ->
     { model | wpm = model.wpm * weight } |> pure
-    
+
 
 
 --| View
@@ -163,7 +169,7 @@ subscriptions model =
        [ every (toMilliseconds model.wpm) Tick
        , every (toMilliseconds model.wpm) (always SendWord)
        , presses Pressed
-       , weightAnswer GetWeight 
+       , weightAnswer GetWeight
        ]
 
 

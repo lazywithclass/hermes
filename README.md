@@ -22,13 +22,13 @@ Pair programmed at RC by Carl J. Factora & Alberto Zaccagni
 * [] given a URL and a function
   * [] format code
   * [] dont print paging
+* [] handle ( ) " " etc as punctuation
+* [] contextual punctuation
 
-  
-  
 take in the HTML and divide between labels
 ignore poging
 show normal text
 treat code differently
 
 
-[] contextual punctuation
+

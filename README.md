@@ -19,6 +19,7 @@ Pair programmed at RC by Carl J. Factora & Alberto Zaccagni
   * [x] a word close to a comma lasts longer
   * [x] a word close to a semicolumn lasts even longer
   * [x] a word close to a full stop lasts even longer
+* [x] handle normal text and code text differently
 * [] given a URL and a function
   * [] format code
   * [] dont print paging

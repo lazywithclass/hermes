@@ -8,8 +8,8 @@ import Http exposing (Error)
 import Keyboard exposing (KeyCode, presses)
 import String exposing (split, words, left, right, slice)
 import Time exposing (Time, every, millisecond, second)
-import Tokeniser exposing (..)
 
+import Tokeniser exposing (..)
 
 -- when there's no effects
 pure : Model -> ( Model, Cmd Msg )
@@ -108,7 +108,7 @@ type Msg
   | Pressed Int
   | GetWeight Float
   | Tick Time
-  | GetContent
+  | GetContent String
   | FetchContentCompleted (Result Http.Error String)
 
 
@@ -129,6 +129,7 @@ update msg model =
 
     GetText text ->
     { model | words = parseString text |> fromList } |> pure
+    -- { model | words = parseHtmlString text } |> pure
 
     Pressed key -> pure <|
       if key == 32
@@ -154,10 +155,31 @@ update msg model =
           }
         , weightQuestion word )
 
-    GetContent -> pure model
+    GetContent link -> (model, fetchContentCmd link)
 
-    FetchContentCompleted result -> pure model
+    FetchContentCompleted result -> fetchContentCompleted model result
 
+-- http
+fetchContent : String -> Http.Request String
+fetchContent =
+    String.append "https://crossorigin.me/" >> Http.getString 
+
+
+fetchContentCmd : String -> Cmd Msg
+fetchContentCmd s =
+    Http.send FetchContentCompleted (fetchContent s)
+
+-- just to see it... fix this
+fetchContentCompleted : Model ->
+                        Result Http.Error String ->
+                        ( Model, Cmd Msg )
+fetchContentCompleted model result =
+  case result of
+    Ok sourceString ->
+      { model | words = parseHtmlString sourceString } |> pure
+      -- { model | word = sourceString } |> pure
+        
+    Err _ -> pure model
 
 --| View
 view : Model -> Html Msg
@@ -167,6 +189,8 @@ view model =
           [ button [ onClick DecWpm, class "pure-button" ] [ text "Dec" ]
           , button [ onClick IncWpm, class "pure-button" ] [ text "Inc" ]
           , input [ defaultValue "Paste text here!", onInput GetText ] []
+          -- change this `always`
+          , input [ defaultValue "Paste link here!", onInput GetContent ] []
           ]
       , div [ class "word" ] (orp model.word)
       ]

@@ -3,7 +3,7 @@ port module App exposing (..)
 import Html exposing (Html, text, div, img, button, input, span)
 import Html.Attributes exposing (src, class, defaultValue, style)
 import Html.Events exposing (onClick, onInput)
-import Array exposing (Array, fromList, get, length)
+import Array exposing (Array, fromList, get)
 import Time exposing (Time, every, millisecond, second)
 import String exposing (split, words, left, right, slice)
 import Keyboard exposing (KeyCode, presses)
@@ -61,9 +61,10 @@ toMilliseconds wpm = 60000 / wpm
 
 
 iter : Bool -> Int -> Int
-iter bool step = case bool of
-  True -> step + 1
-  False -> step
+iter bool step =
+  case bool of
+    True -> step + 1
+    False -> step
 
 
 --| ORP
@@ -88,8 +89,9 @@ getOrpIndex word =
 
 orp : String -> List (Html msg)
 orp word =
-  let orpI = getOrpIndex word
-      len = String.length word
+  let
+    orpI = getOrpIndex word
+    len = String.length word
   in
     [ left orpI word |> text
     , span [ style [ ( "color", "red" ) ] ]
@@ -138,12 +140,12 @@ update msg model =
     Tick time ->
       let
         -- newNth = iter isPlaying model.nth
-        newNth = iter model.playing model.nth
         -- (word, isPlaying) = getMaybe model.nth model.words
-        (word, isPlaying) = getMaybe newNth model.words
+        nth = iter model.playing model.nth
+        (word, isPlaying) = getMaybe nth model.words
       in
         ( { model | wpm = model.defaultWpm
-          , nth = newNth % length model.words
+          , nth = nth % Array.length model.words
           , word = word
           , playing = model.playing && isPlaying
           , sec = time

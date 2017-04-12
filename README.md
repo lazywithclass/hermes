@@ -6,7 +6,7 @@ Pair programmed at [RC](https://recurse.com) SP1 2017 by Carl J. Factora & Alber
 
 ### The idea
 
-Being able to speed read technical books.
+Being able to speed read technical books and documents.
 
 The challenge is that sometimes while reading you encounter code snippets, or chemical
 formulas, or math expressions, it would be great if those could appear on screen, nicely
@@ -38,8 +38,18 @@ This is still under heavy development, we will provide a set of features and how
   * [x] a word close to a semicolumn lasts even longer
   * [x] a word close to a full stop lasts even longer
 * [x] handle normal text and code text differently
+* [x] Get HTML code from a link
 * [] given a URL and a function
   * [] format code
   * [] dont print paging
 * [] handle ( ) " " etc as punctuation
 * [] contextual punctuation
+
+### Current goal:
+
+We have successfully implemented the functionality to pull raw HTML code from a user-inputted site. We still have to clean up several things, including:
+
+* removing extra-text generated from a website (e.g. text contained in scripts)
+* For some reason we are not able to do this regardless of handling it in `Tokenisier`.
+* Example of this result is in `src/scratch`
+* Show specially formatted text in a nice way (currently, we only show it as raw text in a `div`).

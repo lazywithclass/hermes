@@ -1,13 +1,13 @@
 port module App exposing (..)
 
+import Array exposing (Array, fromList, get)
 import Html exposing (Html, text, div, img, button, input, span)
 import Html.Attributes exposing (src, class, defaultValue, style)
 import Html.Events exposing (onClick, onInput)
-import Array exposing (Array, fromList, get)
-import Time exposing (Time, every, millisecond, second)
-import String exposing (split, words, left, right, slice)
+import Http exposing (Error)
 import Keyboard exposing (KeyCode, presses)
-
+import String exposing (split, words, left, right, slice)
+import Time exposing (Time, every, millisecond, second)
 import Tokeniser exposing (..)
 
 
@@ -98,7 +98,7 @@ orp word =
         [ slice orpI (orpI + 1) word |> text ]
     , right (len - (orpI + 1)) word |> text
     ]
-    
+
 
 --| Messages
 type Msg
@@ -108,6 +108,8 @@ type Msg
   | Pressed Int
   | GetWeight Float
   | Tick Time
+  | GetContent
+  | FetchContentCompleted (Result Http.Error String)
 
 
 --| Update
@@ -151,6 +153,10 @@ update msg model =
           , sec = time
           }
         , weightQuestion word )
+
+    GetContent -> pure model
+
+    FetchContentCompleted result -> pure model
 
 
 --| View

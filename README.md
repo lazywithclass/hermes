@@ -1,6 +1,24 @@
 ## Hermes
 
-Pair programmed at RC by Carl J. Factora & Alberto Zaccagni
+Hermes is a speed reading app with a look at practical usage.
+
+Pair programmed at [RC](https://recurse.com) SP1 2017 by Carl J. Factora & Alberto Zaccagni
+
+### The idea
+
+Being able to speed read technical books.
+
+The challenge is that sometimes while reading you encounter code snippets, or chemical
+formulas, or math expressions, it would be great if those could appear on screen, nicely
+formatted, so you don't exit your speed reading flow.
+
+We will provide a GIF soon!
+
+
+### Features
+
+This is still under heavy development, we will provide a set of features and how to use them in a short while!
+
 
 ### TODOS
 

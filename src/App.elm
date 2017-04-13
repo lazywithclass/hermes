@@ -27,13 +27,14 @@ type alias Model =
   , words : Array (String, Bool)
   , sec : Time
   -- wpm handlers
+  , wordSpeed : Float
   , wpm : Float
-  , defaultWpm : Float
   -- pause/play
   , playing : Bool
   -- keyboard
   , pressed : Int
   }
+
 
 init : String -> ( Model, Cmd Msg )
 init flags =
@@ -41,8 +42,8 @@ init flags =
   , nth = 0
   , words = welcomeMsg
   , sec = 0
+  , wordSpeed = toFloat 300
   , wpm = toFloat 300
-  , defaultWpm = toFloat 300
   , playing = False
   , pressed = 0
   } |> pure
@@ -74,6 +75,7 @@ isPunc str =
   then 1
   else 0
 
+
 getOrpIndex : String -> Int
 getOrpIndex word =
   let
@@ -86,6 +88,7 @@ getOrpIndex word =
       2 -> 1
       3 -> 1
       _ -> (floor <| toFloat len / 2) - 1
+
 
 orp : String -> List (Html msg)
 orp word =
@@ -118,17 +121,16 @@ update msg model =
   case msg of
 
     IncWpm ->
-    { model | wpm = model.wpm + 50
-    , defaultWpm = model.defaultWpm + 50
-    } |> pure
+    { model | wpm = model.wpm + 50 } |> pure
 
     DecWpm ->
-    { model | wpm = model.wpm - 50
-    , defaultWpm = model.defaultWpm - 50
-    } |> pure
+    { model | wpm = model.wpm - 50 } |> pure
 
     GetText text ->
+    -- `parseString` can cause a stack overflow if text is super long!!
+    -- example: Pasting the entire book of great expectations
     { model | words = parseString text |> fromList } |> pure
+    --| for testing
     -- { model | words = parseHtmlString text } |> pure
 
     Pressed key -> pure <|
@@ -137,17 +139,15 @@ update msg model =
       else model
 
     GetWeight weight ->
-    { model | wpm = model.wpm * weight } |> pure
+    { model | wordSpeed = model.wpm * weight } |> pure
 
-    -- EFFECTS
+    -- EFFECTS : Messages that produce Cmd effects
     Tick time ->
       let
-        -- newNth = iter isPlaying model.nth
-        -- (word, isPlaying) = getMaybe model.nth model.words
         nth = iter model.playing model.nth
         (word, isPlaying) = getMaybe nth model.words
       in
-        ( { model | wpm = model.defaultWpm
+        ( { model | wordSpeed = model.wpm
           , nth = nth % Array.length model.words
           , word = word
           , playing = model.playing && isPlaying
@@ -159,6 +159,7 @@ update msg model =
 
     FetchContentCompleted result -> fetchContentCompleted model result
 
+
 -- http
 fetchContent : String -> Http.Request String
 fetchContent =
@@ -169,7 +170,7 @@ fetchContentCmd : String -> Cmd Msg
 fetchContentCmd s =
     Http.send FetchContentCompleted (fetchContent s)
 
--- just to see it... fix this
+
 fetchContentCompleted : Model ->
                         Result Http.Error String ->
                         ( Model, Cmd Msg )
@@ -181,6 +182,7 @@ fetchContentCompleted model result =
         
     Err _ -> pure model
 
+
 --| View
 view : Model -> Html Msg
 view model =
@@ -189,7 +191,6 @@ view model =
           [ button [ onClick DecWpm, class "pure-button" ] [ text "Dec" ]
           , button [ onClick IncWpm, class "pure-button" ] [ text "Inc" ]
           , input [ defaultValue "Paste text here!", onInput GetText ] []
-          -- change this `always`
           , input [ defaultValue "Paste link here!", onInput GetContent ] []
           ]
       , div [ class "word" ] (orp model.word)
@@ -200,7 +201,7 @@ view model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
-       [ every (toMilliseconds model.wpm) Tick
+       [ every (toMilliseconds model.wordSpeed) Tick
        , presses Pressed
        , weightAnswer GetWeight
        ]

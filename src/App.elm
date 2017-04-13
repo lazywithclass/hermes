@@ -9,7 +9,11 @@ import Keyboard exposing (KeyCode, presses)
 import String exposing (split, words, left, right, slice)
 import Time exposing (Time, every, millisecond, second)
 
+--| import stuff
+import Helpers exposing (..)
 import Tokeniser exposing (..)
+import GetContent exposing (..)
+
 
 -- when there's no effects
 pure : Model -> ( Model, Cmd Msg )
@@ -49,60 +53,6 @@ init flags =
   } |> pure
 
 
---| Helpers
-getMaybe : Int -> Array (String, Bool) -> (String, Bool)
-getMaybe nth words =
-  case get nth words of
-    Nothing -> ("", False)
-    Just tuple -> tuple
-
-
-toMilliseconds : Float -> Time
-toMilliseconds wpm = 60000 / wpm
-
-
-iter : Bool -> Int -> Int
-iter bool step =
-  case bool of
-    True -> step + 1
-    False -> step
-
-
---| ORP
-isPunc : String -> Int
-isPunc str =
-  if str == "!" || str == ":" || str == "," || str == "."
-  then 1
-  else 0
-
-
-getOrpIndex : String -> Int
-getOrpIndex word =
-  let
-    realLen = String.length word
-    last = slice (realLen - 1) realLen word
-    len = realLen - (isPunc last)
-  in
-    case len of
-      1 -> 0
-      2 -> 1
-      3 -> 1
-      _ -> (floor <| toFloat len / 2) - 1
-
-
-orp : String -> List (Html msg)
-orp word =
-  let
-    orpI = getOrpIndex word
-    len = String.length word
-  in
-    [ left orpI word |> text
-    , span [ style [ ( "color", "red" ) ] ]
-        [ slice orpI (orpI + 1) word |> text ]
-    , right (len - (orpI + 1)) word |> text
-    ]
-
-
 --| Messages
 type Msg
   = IncWpm
@@ -112,7 +62,7 @@ type Msg
   | GetWeight Float
   | Tick Time
   | GetContent String
-  | FetchContentCompleted (Result Http.Error String)
+  | FetchContentCompleted (Result Error String)
 
 
 --| Update
@@ -147,40 +97,20 @@ update msg model =
         nth = iter model.playing model.nth
         (word, isPlaying) = getMaybe nth model.words
       in
-        ( { model | wordSpeed = model.wpm
-          , nth = nth % Array.length model.words
+        ( { model |--  wordSpeed = model.wpm
+          -- , 
+              nth = nth % Array.length model.words
           , word = word
           , playing = model.playing && isPlaying
           , sec = time
           }
         , weightQuestion word )
 
-    GetContent link -> (model, fetchContentCmd link)
+    GetContent link ->
+      (model, fetchContentCmd link FetchContentCompleted)
 
-    FetchContentCompleted result -> fetchContentCompleted model result
-
-
--- http
-fetchContent : String -> Http.Request String
-fetchContent =
-    String.append "https://crossorigin.me/" >> Http.getString 
-
-
-fetchContentCmd : String -> Cmd Msg
-fetchContentCmd s =
-    Http.send FetchContentCompleted (fetchContent s)
-
-
-fetchContentCompleted : Model ->
-                        Result Http.Error String ->
-                        ( Model, Cmd Msg )
-fetchContentCompleted model result =
-  case result of
-    Ok sourceString ->
-      { model | words = parseHtmlString sourceString } |> pure
-      -- { model | word = sourceString } |> pure
-        
-    Err _ -> pure model
+    FetchContentCompleted result ->
+      { model | words = fetchContentCompleted model.words result } |> pure
 
 
 --| View

@@ -15,9 +15,22 @@ formatted, so you don't exit your speed reading flow.
 We will provide a GIF soon!
 
 
+### How to run it
+
+```bash
+$ elm-app start
+```
+
+
 ### Features
 
-This is still under heavy development, we will provide a set of features and how to use them in a short while!
+This is still under heavy development, for now we have:
+
+ * basic speed reading with letter focus
+ * longer words will stay on screen for longer
+ * punctuation will keep words on screen for longer
+ * code stops execution giving you time to go through it
+ * more to come!
 
 
 ### TODOS

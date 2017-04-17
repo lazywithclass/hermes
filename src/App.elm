@@ -21,7 +21,8 @@ pure model = ( model, Cmd.none )
 
 
 welcomeMsg : Array (String, Bool)
-welcomeMsg = parseHtmlString myElement
+-- welcomeMsg = parseHtmlString myElement
+welcomeMsg = fromList <| parseString "Lets test (this fucking (fuckity fuck FUCK) out), \"ok we are testing\""
 
 
 --| Init State + Model
@@ -37,6 +38,7 @@ type alias Model =
   , playing : Bool
   -- keyboard
   , pressed : Int
+  , context: (Bool, String)
   }
 
 
@@ -50,6 +52,7 @@ init flags =
   , wpm = toFloat 300
   , playing = False
   , pressed = 0
+  , context = (False, "")
   } |> pure
 
 
@@ -96,13 +99,16 @@ update msg model =
       let
         nth = iter model.playing model.nth
         (word, isPlaying) = getMaybe nth model.words
+        (inContext, closing) = model.context
+        context = if inContext
+                  then endsContext closing word
+                  else startsContext word
       in
-        ( { model |--  wordSpeed = model.wpm
-          -- , 
-              nth = nth % Array.length model.words
+        ( { model | nth = nth % Array.length model.words
           , word = word
           , playing = model.playing && isPlaying
           , sec = time
+          , context = context
           }
         , weightQuestion word )
 
@@ -124,6 +130,11 @@ view model =
           , input [ defaultValue "Paste link here!", onInput GetContent ] []
           ]
       , div [ class "word" ] (orp model.word)
+      , div [ class "context" ]
+            [ case model.context of
+                (True, closing) -> text closing
+                _ -> text ""
+            ]
       ]
 
 

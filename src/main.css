@@ -26,3 +26,14 @@ button {
   margin-right: -50%;
   transform: translate(-50%, -50%)
 }
+
+.context {
+  font-size: 20px;
+  font-family: Monaco;
+  color: #666;
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  margin-right: -50%;
+  transform: translate(-50%, -50%)
+}

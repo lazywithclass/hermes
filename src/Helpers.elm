@@ -26,6 +26,27 @@ iter bool step =
 
 
 --| ORP
+startsContext : String -> (Bool, String)
+startsContext word =
+  case slice 0 1 word of
+    "("  -> (True, ")")
+    "\"" -> (True, "\"")
+    _    -> (False, "")
+
+
+endsContext : String -> String -> (Bool, String)
+endsContext closing word =
+  let
+    len = String.length word
+    last = slice (len - 1) len word
+    fromLast = if isPunc last == 1
+      then slice (len - 2) (len - 1) word
+      else last
+    closed = closing == fromLast
+  in
+    if closed then (False, "") else (True, closing)
+
+
 isPunc : String -> Int
 isPunc str =
   if str == "!" || str == ":" || str == "," || str == "."

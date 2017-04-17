@@ -56,7 +56,16 @@ This is still under heavy development, for now we have:
   * [] format code
   * [] dont print paging
 * [] handle ( ) " " etc as punctuation
-* [] contextual punctuation
+* [x] contextual punctuation
+*   [] next step is having a stack of nested punctuations, gradually disappearing
+* [] we need a more intelligent way to detect punctuation
+*
+
+### Known problems
+
+* [] two character punctuaction breaks our current punctuation, ex: ...
+* [] nested punctuation does not work, ex: (hello, have (some fun now) with parens) 
+     it kills the context prematurely
 
 ### Current goal:
 

@@ -59,7 +59,7 @@ This is still under heavy development, for now we have:
 * [x] contextual punctuation
 *   [] next step is having a stack of nested punctuations, gradually disappearing
 * [] we need a more intelligent way to detect punctuation
-*
+* [] handle HTTP error
 
 ### Known problems
 

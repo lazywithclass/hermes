@@ -21,8 +21,8 @@ pure model = ( model, Cmd.none )
 
 
 welcomeMsg : Array (String, Bool)
--- welcomeMsg = parseHtmlString myElement
-welcomeMsg = fromList <| parseString "Lets test (this fucking (fuckity fuck FUCK) out), \"ok we are testing\""
+welcomeMsg = parseHtmlString myElement
+-- welcomeMsg = fromList <| parseString "Lets test (this thing (and some nested) parens), \"ok we are testing\""
 
 
 --| Init State + Model

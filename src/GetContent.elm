@@ -6,6 +6,7 @@ import String exposing (append)
 
 import Tokeniser exposing (..)
 
+
 fetchContent : String -> Request String
 fetchContent = append "https://crossorigin.me/" >> getString
 
@@ -14,9 +15,9 @@ fetchContentCmd : String -> (Result Error String -> msg) -> Cmd msg
 fetchContentCmd s cb = send cb (fetchContent s)
 
 
-fetchContentCompleted : Array ( String, Bool ) ->
+fetchContentCompleted : Array Word ->
                         Result Error String ->
-                        Array ( String, Bool )
+                        Array Word
 fetchContentCompleted old result =
   case result of
 

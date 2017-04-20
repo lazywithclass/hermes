@@ -6,7 +6,7 @@ import Html.Attributes exposing (src, class, defaultValue, style)
 import Html.Events exposing (onClick, onInput)
 import Http exposing (Error)
 import Keyboard exposing (KeyCode, presses)
-import String exposing (split, words, left, right, slice)
+-- import String exposing (split, words, left, right, slice)
 import Time exposing (Time, every, millisecond, second)
 
 --| import stuff
@@ -20,7 +20,7 @@ pure : Model -> ( Model, Cmd Msg )
 pure model = ( model, Cmd.none )
 
 
-welcomeMsg : Array (String, Bool)
+welcomeMsg : Array Word -- ( String, Bool )
 welcomeMsg = parseHtmlString myElement
 -- welcomeMsg = fromList <| parseString "Lets test (this thing (and some nested) parens), \"ok we are testing\""
 
@@ -29,7 +29,8 @@ welcomeMsg = parseHtmlString myElement
 type alias Model =
   { word : String
   , nth : Int
-  , words : Array (String, Bool)
+  , words : Array Word
+  , context: (Bool, String)
   , sec : Time
   -- wpm handlers
   , wordSpeed : Float
@@ -38,7 +39,6 @@ type alias Model =
   , playing : Bool
   -- keyboard
   , pressed : Int
-  , context: (Bool, String)
   }
 
 
@@ -47,12 +47,12 @@ init flags =
   { word = ""
   , nth = 0
   , words = welcomeMsg
+  , context = (False, "")
   , sec = 0
   , wordSpeed = toFloat 300
   , wpm = toFloat 300
   , playing = False
   , pressed = 0
-  , context = (False, "")
   } |> pure
 
 
@@ -82,9 +82,9 @@ update msg model =
     GetText text ->
     -- `parseString` can cause a stack overflow if text is super long!!
     -- example: Pasting the entire book of great expectations
-    { model | words = parseString text |> fromList } |> pure
-    --| for testing
-    -- { model | words = parseHtmlString text } |> pure
+    -- { model | words = parseString text |> fromList } |> pure
+    -- | for testing
+    { model | words = parseHtmlString text } |> pure
 
     Pressed key -> pure <|
       if key == 32
@@ -98,7 +98,12 @@ update msg model =
     Tick time ->
       let
         nth = iter model.playing model.nth
-        (word, isPlaying) = getMaybe nth model.words
+        wordConstr = getMaybe nth (Slow "") model.words
+        playWord playing word = playing &&
+          case word of
+            Norm _ -> True
+            Slow _ -> False
+        word = unwrapWord wordConstr
         (inContext, closing) = model.context
         context = if inContext
                   then endsContext closing word
@@ -106,14 +111,15 @@ update msg model =
       in
         ( { model | nth = nth % Array.length model.words
           , word = word
-          , playing = model.playing && isPlaying
+          -- , playing = model.playing && isPlaying
+          , playing = playWord model.playing wordConstr
           , sec = time
           , context = context
           }
         , weightQuestion word )
 
     GetContent link ->
-      (model, fetchContentCmd link FetchContentCompleted)
+      ( model, fetchContentCmd link FetchContentCompleted )
 
     FetchContentCompleted result ->
       { model | words = fetchContentCompleted model.words result } |> pure

@@ -5,17 +5,51 @@ import String exposing (words, uncons, dropLeft)
 import HtmlParser exposing (..)
 import HtmlParser.Util exposing (..)
 
-strip : String -> String -> String
-strip pat str =
-  case pat of
-    "" -> str
-    _ -> 
-      case (uncons pat, uncons str) of
-        (Just (c1,rst1), Just (c2,rst2)) ->
-          if c1 == c2
-          then strip rst1 rst2
-          else strip pat rst2
-        (_,_) -> ""
+
+type Word = Norm String | Slow String
+
+
+unwrapWord : Word -> String
+unwrapWord word =
+  case word of
+    Norm s -> s
+    Slow s -> s
+
+
+getBody : String -> List Node
+getBody str =
+  let
+    start = String.indexes "<body" str
+    end = String.indexes "</body>" str
+  in
+    case (start,end) of
+      ([i],[j]) ->
+        case parse (String.slice i (j + 7) str) of
+          [Element _ _ c] -> c
+          _ -> []
+      _ -> []
+
+
+parseElement : Node -> List Word
+parseElement el =
+  case el of
+    Element identifier _ content ->
+      -- this can be abstracted
+      -- allow the user to configure the behavior
+      case identifier of
+        "p" -> parseString (textContent content)
+        "div" -> textContent content |> Slow |> List.singleton
+        _ -> List.concatMap parseElement content -- parseString (textContent content)
+    _ -> []
+
+
+parseString : String -> List Word
+parseString = words >> List.map Norm
+
+
+parseHtmlString : String -> Array Word
+parseHtmlString = getBody >> List.concatMap parseElement >> fromList
+
 
 myElement : String
 myElement = """
@@ -25,6 +59,7 @@ myElement = """
 <!-- Created by GNU Texinfo 5.1, http://www.gnu.org/software/texinfo/ -->
 <head>
 <title>Structure and Interpretation of Computer Programs, 2e: Dedication</title>
+
 
 <meta name="description" content="Structure and Interpretation of Computer Programs, 2e: Dedication" />
 <meta name="keywords" content="Structure and Interpretation of Computer Programs, 2e: Dedication" />
@@ -47,6 +82,9 @@ myElement = """
 </head>
 
 <body>
+
+<div>quicksort [1..5000]</div>
+
 <section><span class="top jump" title="Jump to top"><a href="#pagetop" accesskey="t">⇡</a></span><a id="pagetop"></a><a id="Dedication"></a>
 <nav class="header">
 <p>
@@ -54,6 +92,8 @@ Next: <a href="Foreword.xhtml#Foreword" accesskey="n" rel="next">Foreword</a>, P
 </nav>
 <a id="Dedication-1"></a>
 <h2 class="unnumbered">Dedication</h2>
+
+
 
 <p>This book is dedicated, in respect and admiration, to the spirit that lives in
 the computer.
@@ -77,6 +117,8 @@ more.”
 <p>—Alan J. Perlis (April 1, 1922 – February 7, 1990)
 </p></blockquote>
 
+
+
 <nav class="header">
 <p>
 Next: <a href="Foreword.xhtml#Foreword" accesskey="n" rel="next">Foreword</a>, Prev: <a href="UTF.xhtml#UTF" accesskey="p" rel="prev">UTF</a>, Up: <a href="index.xhtml#Top" accesskey="u" rel="prev">Top</a>   [<a href="index.xhtml#SEC_Contents" title="Table of contents" accesskey="c" rel="contents">Contents</a>]</p>
@@ -84,28 +126,9 @@ Next: <a href="Foreword.xhtml#Foreword" accesskey="n" rel="next">Foreword</a>, P
 
 
 </section><span class="bottom jump" title="Jump to bottom"><a href="#pagebottom" accesskey="b">⇣</a></span><a id="pagebottom"></a>
+
+<div>hoorah, it worked</div>
+ 
 </body>
 </html>
 """
-
-
-parseHtmlString : String -> Array (String, Bool)
-parseHtmlString =
-  let
-    parseElement el =
-      case el of
-        Element identifier _ content ->
-          -- this can be abstracted
-          -- allow the user to configure the behavior
-          case identifier of
-            "p" -> parseString (textContent content)
-            "div" -> [(textContent content, False)]
-            "script" -> []
-            _ -> parseString (textContent content)
-        _ -> []
-  in
-    strip "<html" >> dropLeft 1 >> parse >> List.concatMap parseElement >> fromList
-
-
-parseString : String -> List ( String, Bool )
-parseString = words >> List.map (\w -> (w, True))-- >> fromList

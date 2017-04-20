@@ -7,11 +7,11 @@ import String exposing (slice, left, right)
 import Array exposing (Array, get)
 
 
-getMaybe : Int -> Array (String, Bool) -> (String, Bool)
-getMaybe nth words =
+getMaybe : Int -> a -> Array a -> a
+getMaybe nth default words =
   case get nth words of
-    Nothing -> ("", False)
-    Just tuple -> tuple
+    Nothing -> default
+    Just word -> word
 
 
 toMilliseconds : Float -> Time
@@ -25,10 +25,10 @@ iter bool step =
     False -> step
 
 
---| ORP
+--| Contextual punctuation
 startsContext : String -> (Bool, String)
 startsContext word =
-  case slice 0 1 word of
+  case left 1 word of
     "("  -> (True, ")")
     "\"" -> (True, "\"")
     _    -> (False, "")
@@ -38,7 +38,7 @@ endsContext : String -> String -> (Bool, String)
 endsContext closing word =
   let
     len = String.length word
-    last = slice (len - 1) len word
+    last = right 1 word -- slice (len - 1) len word
     fromLast = if isPunc last == 1
       then slice (len - 2) (len - 1) word
       else last
@@ -47,6 +47,7 @@ endsContext closing word =
     if closed then (False, "") else (True, closing)
 
 
+--| ORP
 isPunc : String -> Int
 isPunc str =
   if str == "!" || str == ":" || str == "," || str == "."

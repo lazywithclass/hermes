@@ -63,6 +63,7 @@ This is still under heavy development, for now we have:
 
 ### Known problems
 
+* [] nested elements *may* cause some problems with `parseHtmlString`. I.e., we need to handle nested websites properly.
 * [] two character punctuaction breaks our current punctuation, ex: ...
 * [] nested punctuation does not work, ex: (hello, have (some fun now) with parens) 
      it kills the context prematurely

@@ -32,7 +32,7 @@ Let's test (this thing "and some nested" cool) parens ha (ha ha ha) hehe,..
 
 --| Init State + Model
 type alias Model =
-  { word : String
+  { word : Word
   , nth : Int
   , words : Array Word
   , context : List String
@@ -49,7 +49,7 @@ type alias Model =
 
 init : String -> ( Model, Cmd Msg )
 init flags =
-  { word = ""
+  { word = Norm ""
   , nth = 0
   , words = welcomeMsg
   , context = []
@@ -103,25 +103,25 @@ update msg model =
     Tick time ->
       let
         nth = iter model.playing model.nth
-        wordConstr = getMaybe nth (Slow "") model.words
+        word = getMaybe nth (Slow "") model.words
+        unwrappedWord = unwrapWord word
         playWord playing word = playing &&
           case word of
             Norm _ -> True
             Slow _ -> False
-        word = unwrapWord wordConstr
         context =
           model.context
-            |> extendContext word
-            |> shrinkContext word
+            |> extendContext unwrappedWord
+            |> shrinkContext unwrappedWord
       in
         ( { model | nth = nth % Array.length model.words
           , word = word
           -- , playing = model.playing && isPlaying
-          , playing = playWord model.playing wordConstr
+          , playing = playWord model.playing word
           , sec = time
           , context = context
           }
-        , weightQuestion word )
+        , weightQuestion unwrappedWord )
 
     GetContent link ->
       ( model, fetchContentCmd link FetchContentCompleted )
@@ -140,7 +140,9 @@ view model =
           , input [ defaultValue "Paste text here!", onInput GetText ] []
           , input [ defaultValue "Paste link here!", onInput GetContent ] []
           ]
-      , div [ class "middle word" ] (orp model.word)
+      , case model.word of
+          Norm word -> div [ class "middle word" ] (orp word)
+          Slow word -> div [ class "middle word code" ] [ text word ]
       , div [ class "middle context" ]
             -- which one looks better?? / makes more sense
             -- [ top model.context |> text ]

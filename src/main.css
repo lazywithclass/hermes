@@ -30,6 +30,11 @@ button {
   color: #CCCCCC;
 }
 
+.code {
+  padding-top: 100px;
+  white-space: pre;
+}
+
 .context {
   font-size: 20px;
   font-family: Monaco;

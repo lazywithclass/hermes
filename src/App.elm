@@ -140,8 +140,8 @@ view model =
           , input [ defaultValue "Paste text here!", onInput GetText ] []
           , input [ defaultValue "Paste link here!", onInput GetContent ] []
           ]
-      , div [ class "word" ] (orp model.word)
-      , div [ class "context" ]
+      , div [ class "middle word" ] (orp model.word)
+      , div [ class "middle context" ]
             -- which one looks better?? / makes more sense
             -- [ top model.context |> text ]
               (model.context |> List.map (\x -> div [] [ text x ]))

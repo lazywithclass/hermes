@@ -25,42 +25,99 @@ iter bool step =
     False -> step
 
 
+isPunc : String -> Bool
+isPunc str =
+  if str == "!" || str == ":" || str == "," || str == "."
+  then True
+  else False
+
+
+
 --| Contextual punctuation
-startsContext : String -> (Bool, String)
-startsContext word =
+push : a -> List a -> List a
+push item stk = item :: stk
+
+
+pop : List a -> ( Maybe a, List a )
+pop stk =
+    let
+        item = List.head stk
+        tail = List.tail stk
+    in
+      case item of
+        Nothing -> ( Nothing, stk )
+        Just item ->
+          let
+            newstk =
+              case tail of
+                Nothing -> []
+                Just tail -> tail
+          in
+            ( Just item, newstk )
+
+
+top : List String -> String
+top stk =
+  case List.head stk of
+    Nothing -> ""
+    Just s -> s
+
+
+empty : List String -> Bool
+empty stk =
+  case top stk of
+    "" -> True
+    _ -> False
+
+
+notInContext : List String -> Bool
+notInContext = empty
+
+
+extendContext : String -> List String -> List String
+extendContext word stk =
   case left 1 word of
-    "("  -> (True, ")")
-    "\"" -> (True, "\"")
-    _    -> (False, "")
+    "(" -> push ")" stk
+    "\"" -> push "\"" stk
+    _ -> stk
 
 
-endsContext : String -> String -> (Bool, String)
-endsContext closing word =
+stripAllPunc : String -> String
+stripAllPunc str =
   let
-    len = String.length word
-    last = right 1 word -- slice (len - 1) len word
-    fromLast = if isPunc last == 1
-      then slice (len - 2) (len - 1) word
-      else last
-    closed = closing == fromLast
+    last = right 1 str
   in
-    if closed then (False, "") else (True, closing)
+    if isPunc last
+    then stripAllPunc <| String.dropRight 1 str
+    else str
+
+
+shrinkContext : String -> List String -> List String    
+shrinkContext word stk =
+  if notInContext stk
+  then stk
+  else
+    let
+      stripped = stripAllPunc word
+      last = right 1 stripped
+      ( lastContext, newstk ) = pop stk
+    in
+      case ( last, lastContext ) of
+        ( x, Just y ) ->
+          if x == y
+          then newstk
+          else stk -- invalid
+        _ -> stk
 
 
 --| ORP
-isPunc : String -> Int
-isPunc str =
-  if str == "!" || str == ":" || str == "," || str == "."
-  then 1
-  else 0
-
-
 getOrpIndex : String -> Int
 getOrpIndex word =
   let
     realLen = String.length word
     last = slice (realLen - 1) realLen word
-    len = realLen - (isPunc last)
+    len =
+      if isPunc last then realLen - 1 else realLen
   in
     case len of
       1 -> 0

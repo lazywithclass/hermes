@@ -21,8 +21,13 @@ pure model = ( model, Cmd.none )
 
 
 welcomeMsg : Array Word -- ( String, Bool )
-welcomeMsg = parseHtmlString myElement
--- welcomeMsg = fromList <| parseString "Lets test (this thing (and some nested) parens), \"ok we are testing\""
+-- welcomeMsg = parseHtmlString myElement
+welcomeMsg = """ 
+Let's test (this thing "and some nested" cool) parens ha (ha ha ha) hehe,.. 
+\"ok (we are) testing\"!
+"""
+    |> parseString
+    |> fromList
 
 
 --| Init State + Model
@@ -30,7 +35,7 @@ type alias Model =
   { word : String
   , nth : Int
   , words : Array Word
-  , context: (Bool, String)
+  , context : List String
   , sec : Time
   -- wpm handlers
   , wordSpeed : Float
@@ -47,7 +52,7 @@ init flags =
   { word = ""
   , nth = 0
   , words = welcomeMsg
-  , context = (False, "")
+  , context = []
   , sec = 0
   , wordSpeed = toFloat 300
   , wpm = toFloat 300
@@ -104,10 +109,10 @@ update msg model =
             Norm _ -> True
             Slow _ -> False
         word = unwrapWord wordConstr
-        (inContext, closing) = model.context
-        context = if inContext
-                  then endsContext closing word
-                  else startsContext word
+        context =
+          model.context
+            |> extendContext word
+            |> shrinkContext word
       in
         ( { model | nth = nth % Array.length model.words
           , word = word
@@ -137,10 +142,9 @@ view model =
           ]
       , div [ class "word" ] (orp model.word)
       , div [ class "context" ]
-            [ case model.context of
-                (True, closing) -> text closing
-                _ -> text ""
-            ]
+            -- which one looks better?? / makes more sense
+            -- [ top model.context |> text ]
+              (model.context |> List.map (\x -> div [] [ text x ]))
       ]
 
 

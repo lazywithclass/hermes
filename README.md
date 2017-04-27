@@ -57,16 +57,17 @@ This is still under heavy development, for now we have:
   * [] dont print paging
 * [] handle ( ) " " etc as punctuation
 * [x] contextual punctuation
-*   [] next step is having a stack of nested punctuations, gradually disappearing
+  * [] next step is having a stack of nested punctuations, gradually disappearing
+  * [x] handle multi character punctuaction (e.g. `...`)
+  * [x] nested punctuation (e.g. (hello, have (some fun now) with parens))
 * [] we need a more intelligent way to detect punctuation
 * [] handle HTTP error
 
 ### Known problems
 
 * [] nested elements *may* cause some problems with `parseHtmlString`. I.e., we need to handle nested websites properly.
-* [] two character punctuaction breaks our current punctuation, ex: ...
-* [] nested punctuation does not work, ex: (hello, have (some fun now) with parens) 
-     it kills the context prematurely
+* [] contextual punctuation does not respect window size
+* [] contextual punctuation cannot handle `"))"` yet
 
 ### Current goal:
 

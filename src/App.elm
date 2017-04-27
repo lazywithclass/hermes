@@ -40,6 +40,7 @@ type alias Model =
   -- wpm handlers
   , wordSpeed : Float
   , wpm : Float
+  , slowed : List String
   -- pause/play
   , playing : Bool
   -- keyboard
@@ -56,6 +57,7 @@ init flags =
   , sec = 0
   , wordSpeed = toFloat 300
   , wpm = toFloat 300
+  , slowed = []
   , playing = False
   , pressed = 0
   } |> pure
@@ -89,7 +91,7 @@ update msg model =
     -- example: Pasting the entire book of great expectations
     -- { model | words = parseString text |> fromList } |> pure
     -- | for testing
-    { model | words = parseHtmlString text } |> pure
+    { model | words = parseHtmlString model.slowed text } |> pure
 
     Pressed key -> pure <|
       if key == 32
@@ -127,7 +129,7 @@ update msg model =
       ( model, fetchContentCmd link FetchContentCompleted )
 
     FetchContentCompleted result ->
-      { model | words = fetchContentCompleted model.words result } |> pure
+      { model | words = fetchContentCompleted model.slowed model.words result } |> pure
 
 
 --| View

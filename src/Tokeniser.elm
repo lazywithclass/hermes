@@ -30,16 +30,21 @@ getBody str =
       _ -> []
 
 
-parseElement : Node -> List Word
-parseElement el =
+parseElement : List String -> Node -> List Word
+parseElement slowed el =
   case el of
     Element identifier _ content ->
       -- this can be abstracted
       -- allow the user to configure the behavior
-      case identifier of
-        "p" -> parseString (textContent content)
-        "div" -> textContent content |> Slow |> List.singleton
-        _ -> List.concatMap parseElement content -- parseString (textContent content)
+      if List.member identifier slowed
+      then
+        textContent content |> Slow |> List.singleton
+      else
+        parseString (textContent content)
+      -- case identifier of
+      --   "p" -> parseString (textContent content)
+      --   "div" -> textContent content |> Slow |> List.singleton
+        -- _ -> List.concatMap parseElement content -- parseString (textContent content)
     _ -> []
 
 
@@ -47,8 +52,8 @@ parseString : String -> List Word
 parseString = words >> List.map Norm
 
 
-parseHtmlString : String -> Array Word
-parseHtmlString = getBody >> List.concatMap parseElement >> fromList
+parseHtmlString : List String -> String -> Array Word
+parseHtmlString slowed = getBody >> List.concatMap (parseElement slowed) >> fromList
 
 
 myElement : String

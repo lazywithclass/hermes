@@ -15,13 +15,14 @@ fetchContentCmd : String -> (Result Error String -> msg) -> Cmd msg
 fetchContentCmd s cb = send cb (fetchContent s)
 
 
-fetchContentCompleted : Array Word ->
+fetchContentCompleted : List String ->
+                        Array Word ->
                         Result Error String ->
                         Array Word
-fetchContentCompleted old result =
+fetchContentCompleted slowed old result =
   case result of
 
-    Ok sourceString -> parseHtmlString sourceString
+    Ok sourceString -> parseHtmlString slowed sourceString
       -- sourceString
 
     Err _ -> old

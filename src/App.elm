@@ -73,6 +73,7 @@ type Msg
   | Tick Time
   | GetContent String
   | FetchContentCompleted (Result Error String)
+  | UpdateSlowed String
 
 
 --| Update
@@ -128,6 +129,9 @@ update msg model =
     GetContent link ->
       ( model, fetchContentCmd link FetchContentCompleted )
 
+    UpdateSlowed slowed ->
+      { model | slowed = String.split slowed "," } |> pure
+
     FetchContentCompleted result ->
       { model | words = fetchContentCompleted model.slowed model.words result } |> pure
 
@@ -141,6 +145,7 @@ view model =
           , button [ onClick IncWpm, class "pure-button" ] [ text "Inc" ]
           , input [ defaultValue "Paste text here!", onInput GetText ] []
           , input [ defaultValue "Paste link here!", onInput GetContent ] []
+          , input [ defaultValue "Slowed down", onInput UpdateSlowed ] []
           ]
       , case model.word of
           Norm word -> div [ class "middle word" ] (orp word)

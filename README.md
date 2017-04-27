@@ -54,26 +54,26 @@ This is still under heavy development, for now we have:
 * [x] Get HTML code from a link
 * [] given a URL and a function
   * [] format code
+  * [x] respect code with new lines
   * [] dont print paging
-* [] handle ( ) " " etc as punctuation
+* [x] handle ( ) " " etc as punctuation
 * [x] contextual punctuation
-  * [] next step is having a stack of nested punctuations, gradually disappearing
+  * [x] next step is having a stack of nested punctuations, gradually disappearing
   * [x] handle multi character punctuaction (e.g. `...`)
   * [x] nested punctuation (e.g. (hello, have (some fun now) with parens))
-* [] we need a more intelligent way to detect punctuation
+* [x] we need a more intelligent way to detect punctuation
 * [] handle HTTP error
+* [] add a loading icon when we are fetching HTML contents from the URL
 
 ### Known problems
 
 * [] nested elements *may* cause some problems with `parseHtmlString`. I.e., we need to handle nested websites properly.
 * [] contextual punctuation does not respect window size
 * [] contextual punctuation cannot handle `"))"` yet
+* [] whenever the whole thing starts with a contextual punctuation then the punctuation is continously pushed into the context
 
 ### Current goal:
 
-We have successfully implemented the functionality to pull raw HTML code from a user-inputted site. We still have to clean up several things, including:
+We are broken. This is fine. (dog with his house on fire here)
 
-* removing extra-text generated from a website (e.g. text contained in scripts)
-* For some reason we are not able to do this regardless of handling it in `Tokenisier`.
-* Example of this result is in `src/scratch`
-* Show specially formatted text in a nice way (currently, we only show it as raw text in a `div`).
+Reason is because of the long-ass recursion in `parseElement` due to ?
